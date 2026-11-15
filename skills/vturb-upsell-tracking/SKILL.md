@@ -1,6 +1,6 @@
 ---
 name: vturb-upsell-tracking
-description: Monta um integrador Kiwify → VTurb que faz as vendas de upsell/downsell 1-click caírem na VSL certa da VTurb (em vez da VSL do front ou de nenhuma). Use quando o usuário disser que as conversões do upsell não aparecem na VSL do upsell, que a VSL do front está "inflada", que quer medir ou fazer teste A/B na VSL de upsell, ou pedir para "montar o integrador da VTurb", "corrigir o src do upsell", "integrar Kiwify com VTurb pelo webhook", "conversão do one-click buy na VTurb". Também use quando perguntarem se trocar src por sck/xcod resolve.
+description: Monta um integrador entre a plataforma de vendas (Kiwify pronta; Hotmart, Eduzz e outras por adaptação) e a VTurb, que faz as vendas de upsell/downsell 1-click caírem na VSL certa da VTurb (em vez da VSL do front ou de nenhuma). Use quando o usuário disser que as conversões do upsell não aparecem na VSL do upsell, que a VSL do front está "inflada", que quer medir ou fazer teste A/B na VSL de upsell, ou pedir para "montar o integrador da VTurb", "corrigir o src do upsell", "integrar Kiwify com VTurb pelo webhook", "conversão do one-click buy na VTurb". Também use quando perguntarem se trocar src por sck/xcod resolve.
 ---
 
 # Integrador VTurb
@@ -34,8 +34,8 @@ Pergunte só o que não der para descobrir lendo o projeto:
 - **Onde o integrador vai rodar?** Procure no projeto: `next.config.*` + Vercel → rota do Next.js; `supabase/` → Edge Function; nada disso → recomende **Supabase Edge Function** (grátis, banco e função juntos).
 - **Ofertas:** quais upsells/downsells 1-click existem, o `checkout_link` de cada um e o **ID do player** (24 hex, depois de `vid-` no embed `<vturb-smartplayer id="vid-…">`). Se o projeto tiver as páginas, extraia o player do código.
 - **Downsell sem VSL própria:** usa o player do upsell da mesma etapa (foi o vídeo que a pessoa viu).
-- **Teste A/B na página do upsell?** (embed com `ab-…` em vez de `vid-…`). Se sim, leia `references/ab-test.md` antes de tudo: exige registrar a variante vista.
-- **Front e upsell no mesmo domínio?** Se não, avise: a sessão da VTurb é por domínio e a correção não funciona entre domínios diferentes.
+- **Teste A/B na página do upsell?** (embed com `ab-…` em vez de `vid-…`). Se sim, leia `references/ab-test.md` antes de tudo: exige um script na página do upsell. **Pergunte onde a página do upsell é feita** (WordPress/Elementor, Webflow, Wix, construtor da plataforma, Lovable, Next.js, HTML) e oriente o usuário passo a passo, clique a clique, para colar o script naquela plataforma. Para upsell com um vídeo só, a plataforma do site não importa: o integrador roda fora dele.
+- **Front e upsell no mesmo domínio?** Se não, avise: a sessão da VTurb é separada por domínio (subdomínio e `www` contam como diferentes), o cenário entre domínios nunca foi testado e a atribuição pode não funcionar. Peça para validar com uma venda real antes de desligar o webhook antigo.
 
 ### 2. Implementar
 
@@ -68,3 +68,11 @@ Consultas de acompanhamento: `references/regras.md#acompanhamento`.
 - Nunca desligue o webhook antigo antes de ver uma venda real passar pelo integrador.
 - Nunca prometa corrigir vendas antigas: a VTurb ignora `order_id` repetido.
 - Não afirme que outra plataforma (Hotmart, Eduzz…) se comporta igual sem testar; o formato do webhook muda.
+
+## Outra plataforma (não Kiwify)
+
+A lógica é a mesma; adapte três pontos, confirmando cada um na documentação da plataforma ou num webhook de teste real (peça ao usuário para disparar um e mostrar o corpo, sem tokens):
+1. **Campos do webhook:** identificador da oferta (o que distingue front, upsell e downsell), e-mail, código de rastreio (`src`, `sck` ou `xcod`) e o evento.
+2. **Validação da assinatura** do webhook da plataforma.
+3. **Endereço de conversões da VTurb** para essa plataforma: use o mesmo que a VTurb deu ao usuário e repasse o corpo no formato que a VTurb já recebia.
+Teste com uma venda real antes de desligar o webhook antigo.
